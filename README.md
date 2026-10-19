@@ -10,6 +10,8 @@ FX.commentCTA(tl, 27.8, { keyword: "KEYWORD" });
 
 One function call per effect. Put it at the second you say the word.
 
+![All 30 effects on the placeholder plate](docs/all-30-placeholder.jpg)
+
 ## What you need
 
 - Node.js 20+ and ffmpeg on your PATH
