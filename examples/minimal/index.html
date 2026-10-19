@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1080, height=1920">
+    <title>Claude Video Effects: minimal example</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <!-- only needed for FX.orbit3D / FX.model3D / FX.phoneFeed (three 0.147 = last version with the non-module GLTFLoader) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Instrument+Serif:ital@0;1&display=block" rel="stylesheet">
+    <link rel="stylesheet" href="fx/fx.css">
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #07111F; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="8" data-width="1080" data-height="1920">
+      <div id="fx-stage">
+        <div id="fx-under"></div>
+        <div id="fx-scene">
+          <video id="plate" data-start="0" data-duration="8" data-track-index="0" src="assets/face.mp4" muted playsinline></video>
+          <div id="fx-behind"></div>
+          <!-- optional: a cutout (alpha video of just you, same take) makes "behind" effects sit BEHIND your head -->
+          <!-- <video id="fx-cutout" data-start="0" data-duration="8" data-track-index="5" src="assets/cutout.webm" muted playsinline style="position:absolute;inset:0;width:1080px;height:1920px;object-fit:cover"></video> -->
+        </div>
+        <!-- plate copies: only needed for fileDrop, videoCard, multiverse. Each needs its OWN file name. -->
+        <div class="fx-copy" id="fx-copy-1"><video id="copy1" data-start="0" data-duration="8" data-track-index="3" src="assets/face-copy1.mp4" muted playsinline></video></div>
+        <div class="fx-copy" id="fx-copy-2"><video id="copy2" data-start="0" data-duration="8" data-track-index="4" src="assets/face-copy2.mp4" muted playsinline></video></div>
+        <div id="fx-grade"></div>
+        <div id="fx-ui"></div>
+        <div id="fx-hud"></div>
+      </div>
+      <!-- your voice: the plate's own audio -->
+      <audio id="vo" data-start="0" data-duration="8" data-track-index="1" src="assets/face.mp4" data-volume="1"></audio>
+      <!-- SFX bed: run  node ../../tools/sfx-bed.mjs .  then uncomment -->
+      <!-- <audio id="sfx" data-start="0" data-duration="8" data-track-index="2" src="assets/sfx-bed.m4a" data-volume="1"></audio> -->
+    </div>
+
+    <!-- optional: face tracking for FX.faceCallout (macOS) -> bash ../../tools/face-track.sh assets/face.mp4 -->
+    <!-- <script src="fx/face-track.js"></script> -->
+    <script src="fx/fx.js"></script>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      const DUR = 8;
+      FX.init({ zone: "full" });           // "left" if you also run FX.toc (the chapter list) on the right
+
+      // One effect per beat, anchored to the spoken word's time (seconds).
+      FX.kineticHook(tl, 0.2, { lines: ["CLAUDE", "MADE THIS"] });
+      FX.terminalReveal(tl, 1.5, { prompt: "make a kinetic title that says SHIP IT", result: "SHIP IT" });
+      FX.giantCaption(tl, 3.4, { big: "30", accent: "effects." });
+      FX.gradeSlider(tl, 4.7);
+      FX.commentCTA(tl, 6.1, { keyword: "KEYWORD" });
+
+      FX.finalize(tl);                     // REQUIRED last call
+      tl.set({}, {}, DUR);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

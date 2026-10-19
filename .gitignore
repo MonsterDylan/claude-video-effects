@@ -1,0 +1,7 @@
+node_modules/
+renders/
+examples/*/fx/
+examples/*/renders/
+examples/*/assets/sfx-bed.m4a
+examples/*/assets/sfx-cues.json
+.DS_Store

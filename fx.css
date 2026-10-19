@@ -1,0 +1,110 @@
+/* ==========================================================================
+   Claude Video Effects: shared styles (v1)
+   The "Signal" palette: violet / magenta / cyan, red = danger only. Change the
+   variables below to re-brand every effect at once. Every class is prefixed .fx-
+   so it can never collide with a project's own CSS.
+   Installed into a project by: node install.mjs <project>
+   ========================================================================== */
+
+:root {
+  --fx-violet: #7A4DFF;
+  --fx-magenta: #C44DF0;
+  --fx-cyan: #35D6E6;
+  --fx-red: #FF3B4E;
+  --fx-white: #FFFFFF;
+  --fx-lav: #8D869A;
+  --fx-lav-hi: #B9B2C8;        /* lavender lifted for small text contrast */
+  --fx-ink: #07111F;           /* near-black navy base */
+  --fx-card-a: #2B2944;
+  --fx-card-b: #493C5B;
+  --fx-red-fill: #351C25;
+  --fx-chrome: linear-gradient(180deg, #fff 0%, #cfc9dd 60%, #fff 100%);
+
+  --fx-display: "Montserrat", "Helvetica Neue", Arial, sans-serif;
+  --fx-ui: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --fx-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --fx-serif: "Instrument Serif", Georgia, serif;   /* italic accent only */
+}
+
+/* ---------- Standard layer stack (see README "Layer stack") ---------- */
+#fx-stage  { position: absolute; inset: 0; width: 1080px; height: 1920px; overflow: hidden; background: var(--fx-ink); }
+#fx-under  { position: absolute; inset: 0; z-index: 0; }
+#fx-scene  { position: absolute; inset: 0; z-index: 2; overflow: hidden; transform-origin: 540px 960px; will-change: transform, filter; }
+#fx-scene > video, #fx-scene .fx-plate { position: absolute; inset: 0; width: 1080px; height: 1920px; object-fit: cover; }
+#fx-behind { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+#fx-cutout { z-index: 10; }
+.fx-copy   { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; z-index: 3; opacity: 0; transform-origin: 0 0; overflow: hidden; }
+.fx-copy > video { position: absolute; inset: 0; width: 1080px; height: 1920px; object-fit: cover; }
+#fx-grade  { position: absolute; inset: 0; z-index: 12; pointer-events: none; }
+#fx-ui     { position: absolute; inset: 0; z-index: 20; pointer-events: none; }
+#fx-hud    { position: absolute; inset: 0; z-index: 30; pointer-events: none; }
+
+/* every effect root starts invisible; its timeline brings it in */
+.fx-root { position: absolute; inset: 0; opacity: 0; }
+.fx-abs  { position: absolute; }
+
+/* ---------- Shared type ---------- */
+.fx-chrome-text {
+  background: var(--fx-chrome); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 18px rgba(122,77,255,.55));
+}
+.fx-display { font-family: var(--fx-display); font-weight: 900; line-height: .9; letter-spacing: -0.02em; white-space: nowrap; }
+.fx-serif-i { font-family: var(--fx-serif); font-style: italic; font-weight: 400; letter-spacing: -0.01em; white-space: nowrap; }
+.fx-mono    { font-family: var(--fx-mono); font-weight: 500; letter-spacing: .04em; }
+.fx-ui-txt  { font-family: var(--fx-ui); }
+.fx-tnum    { font-variant-numeric: tabular-nums; }
+.fx-ch      { display: inline-block; will-change: transform, opacity; }
+
+/* ---------- Node-card ---------- */
+.fx-card {
+  position: absolute; border-radius: 28px; overflow: hidden;
+  background: linear-gradient(160deg, rgba(43,41,68,.94), rgba(73,60,91,.94));
+  border: 2px solid rgba(122,77,255,.85);
+  box-shadow: 0 0 0 1px rgba(122,77,255,.25), 0 0 46px rgba(122,77,255,.45), 0 30px 70px rgba(0,0,0,.55);
+}
+.fx-glass {
+  position: absolute; border-radius: 26px;
+  background: rgba(10,12,24,.86);
+  border: 2px solid rgba(122,77,255,.7);
+  box-shadow: 0 0 38px rgba(122,77,255,.35), 0 24px 60px rgba(0,0,0,.5);
+}
+.fx-pill-label { font-family: var(--fx-mono); font-size: 20px; letter-spacing: .18em; text-transform: uppercase; color: var(--fx-lav-hi); }
+
+/* ---------- HUD: chapter list ---------- */
+.fx-toc { position: absolute; border-radius: 22px; padding: 22px 18px 18px; background: rgba(7,17,31,.82);
+  border: 2px solid rgba(122,77,255,.6); box-shadow: 0 0 36px rgba(122,77,255,.3); }
+.fx-toc-head { display: flex; justify-content: space-between; font-family: var(--fx-mono); font-size: 17px; letter-spacing: .16em; color: var(--fx-lav-hi); margin: 0 6px 10px; }
+.fx-toc-row { position: relative; display: flex; gap: 10px; align-items: center; height: 30px; padding: 0 10px; border-radius: 9px;
+  font-family: var(--fx-ui); font-weight: 600; font-size: 20px; color: rgba(255,255,255,.42); white-space: nowrap; }
+.fx-toc-row b { font-family: var(--fx-mono); font-weight: 500; font-size: 13px; color: rgba(185,178,200,.55); width: 20px; }
+.fx-toc-row.fx-new::after { content: "NEW"; margin-left: auto; font-family: var(--fx-mono); font-size: 11px; letter-spacing: .1em; color: var(--fx-cyan); }
+.fx-toc-hl { position: absolute; left: 18px; right: 18px; height: 30px; border-radius: 9px; background: var(--fx-violet);
+  box-shadow: 0 0 22px rgba(122,77,255,.75); }
+.fx-toc-foot { margin: 12px 6px 0; padding-top: 10px; border-top: 1px solid rgba(141,134,154,.35);
+  font-family: var(--fx-ui); font-weight: 800; font-size: 21px; color: #fff; }
+.fx-toc-foot span { padding: 2px 8px; border-radius: 6px; }
+
+/* ---------- HUD: locked caption (Montserrat 900 + layered stroke) ---------- */
+.fx-cap { position: absolute; left: 60px; right: 60px; text-align: center; font-family: var(--fx-display); font-weight: 900;
+  font-size: 54px; line-height: 1.12; color: #fff;
+  text-shadow: 0 0 2px #050608, 0 3px 0 #050608, 3px 0 0 #050608, -3px 0 0 #050608, 0 -3px 0 #050608, 0 6px 18px rgba(0,0,0,.7); }
+.fx-cap em { font-style: normal; color: var(--fx-cyan); }
+
+/* ---------- App icon tile ---------- */
+.fx-icon { position: absolute; width: 150px; height: 150px; border-radius: 34px; background: #fff; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 34px rgba(0,0,0,.45); }
+.fx-icon img { width: 74%; height: 74%; object-fit: contain; }
+.fx-icon.fx-full { background: transparent; }
+.fx-icon.fx-full img { width: 100%; height: 100%; object-fit: cover; }  /* full-bleed app-store icons: {src, label, full: true} */
+.fx-icon-label { position: absolute; width: 200px; text-align: center; font-family: var(--fx-ui); font-weight: 600; font-size: 24px; color: #fff;
+  text-shadow: 0 2px 8px rgba(0,0,0,.8); }
+
+/* ---------- Thumbnail card (storyboard / grid) ---------- */
+.fx-thumb { position: absolute; border-radius: 16px; overflow: hidden; background: #111; border: 3px solid rgba(255,255,255,.9);
+  box-shadow: 0 16px 36px rgba(0,0,0,.55); }
+.fx-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* ---------- Range bars (lab panel) ---------- */
+.fx-range { position: absolute; height: 14px; border-radius: 7px; background: rgba(255,59,78,.28); }
+.fx-range i { position: absolute; top: 0; bottom: 0; border-radius: 7px; background: rgba(53,214,230,.85); box-shadow: 0 0 14px rgba(53,214,230,.6); }
+.fx-range s { position: absolute; top: -9px; width: 32px; height: 32px; margin-left: -16px; border-radius: 50%; border: 4px solid #fff; background: var(--fx-red); }

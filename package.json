@@ -1,0 +1,16 @@
+{
+  "name": "claude-video-effects",
+  "version": "1.0.0",
+  "description": "30 one-call motion effects for vertical talking-head video, built with Claude Code on Hyperframes (HTML + CSS + GSAP).",
+  "license": "MIT",
+  "author": "Dylan Watkins",
+  "type": "module",
+  "scripts": {
+    "examples": "node install.mjs examples/minimal && node install.mjs examples/showreel",
+    "scrub:minimal": "node tools/fx-scrub.mjs examples/minimal --times 0.8,2.9,3.9,5.4,7.2",
+    "scrub:showreel": "node tools/fx-scrub.mjs examples/showreel --items --points .55"
+  },
+  "devDependencies": {
+    "playwright": "^1.59.1"
+  }
+}

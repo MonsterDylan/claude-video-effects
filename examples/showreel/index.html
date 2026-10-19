@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1080, height=1920">
+    <title>Claude Video Effects: all 30 (showreel example)</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Instrument+Serif:ital@0;1&display=block" rel="stylesheet">
+    <link rel="stylesheet" href="fx/fx.css">
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #07111F; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="46" data-width="1080" data-height="1920">
+      <div id="fx-stage">
+        <div id="fx-under"></div>
+        <div id="fx-scene">
+          <video id="plate" data-start="0" data-duration="46" data-track-index="0" src="assets/face.mp4" muted playsinline></video>
+          <div id="fx-behind"></div>
+        </div>
+        <div class="fx-copy" id="fx-copy-1"><video id="copy1" data-start="0" data-duration="46" data-track-index="3" src="assets/face-copy1.mp4" muted playsinline></video></div>
+        <div class="fx-copy" id="fx-copy-2"><video id="copy2" data-start="0" data-duration="46" data-track-index="4" src="assets/face-copy2.mp4" muted playsinline></video></div>
+        <div id="fx-grade"></div>
+        <div id="fx-ui"></div>
+        <div id="fx-hud"></div>
+      </div>
+      <!-- SFX bed: node ../../tools/sfx-bed.mjs .  then uncomment -->
+      <!-- <audio id="sfx" data-start="0" data-duration="46" data-track-index="2" src="assets/sfx-bed.m4a" data-volume="1"></audio> -->
+    </div>
+
+    <script src="fx/fx.js"></script>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      const TOTAL = 46, KEYWORD = "KEYWORD";
+
+      // The placeholder plate has no real face, so tell faceCallout / eyedropper where the "head" is.
+      // With real footage, run tools/face-track.sh instead and include fx/face-track.js.
+      FX.init({ zone: "left", top: 190, face: { cx: 540, cy: 760, w: 400, h: 480 } });
+
+      const thumbs = [1, 2, 3, 4, 5, 6, 7, 8].map((i) => `assets/thumbs/t${i}.svg`);
+      const feed = [1, 2, 3, 4, 5, 6].map((i) => `assets/feed/r${i}.svg`);
+      const apps = [1, 2, 3, 4].map((i) => ({ src: `assets/icons/app${i}.svg`, label: `App ${i}`, full: true }));
+      const tools = ["Cl", "Gp", "Ge", "Cu", "Ds", "Px", "Gk", "Mj", "Co", "Mi", "Rw"].map((g) => ({ glyph: g, label: g }));
+
+      // name, builder, isNew. Each runs back to back; the chapter list reads the same start times.
+      const plan = [
+        ["Phone takeover",  (t) => FX.phoneFeed(tl, t, { images: feed, dimHud: false, captions: ["Reel one", "Reel two", "Reel three", "Reel four", "Reel five", "Reel six"] }), true],
+        ["Terminal reveal", (t) => FX.terminalReveal(tl, t, { prompt: "build 30 video effects in my brand colors", result: "DONE", status: "Built 30 effects · fx.js" }), true],
+        ["File drop",       (t) => FX.fileDrop(tl, t, { copy: "#fx-copy-1", thumb: thumbs[1], filename: "RAW-TAKE-01.MP4", duration: "0:46" })],
+        ["Face lock",       (t) => FX.faceCallout(tl, t, { label: "Face lock", sub: "TRACKED · 30 FPS" }), true],
+        ["Kinetic hook",    (t) => FX.kineticHook(tl, t, { lines: ["KINETIC", "HOOK"] })],
+        ["Gravity drop",    (t) => FX.gravityDrop(tl, t, { word: "DROP", kicker: "gravity" })],
+        ["Giant captions",  (t) => FX.giantCaption(tl, t, { big: "GIANT", accent: "captions." })],
+        ["Timeline",        (t) => FX.nleTimeline(tl, t)],
+        ["Prompt bar",      (t) => FX.promptBar(tl, t, { text: "prompt bar" })],
+        ["Storyboard deck", (t) => FX.storyboardDeck(tl, t, { images: thumbs.slice(0, 5) })],
+        ["Video card",      (t) => FX.videoCard(tl, t, { copy: "#fx-copy-1", title: "Video card" })],
+        ["Title card",      (t) => FX.titleCard(tl, t, { lines: ["TITLE", "CARD"], tcFrom: t })],
+        ["Grade slider",    (t) => FX.gradeSlider(tl, t)],
+        ["Eyedropper",      (t) => FX.eyedropperGrade(tl, t)],
+        ["Film look",       (t) => FX.filmLook(tl, t)],
+        ["Multiverse",      (t) => FX.multiverse(tl, t, { copies: ["#fx-copy-1", "#fx-copy-2"] }), true],
+        ["Icon strike",     (t) => FX.iconStrike(tl, t, { icons: apps.slice(0, 2), word: "strike." })],
+        ["Jiggle delete",   (t) => FX.jiggleDelete(tl, t, { icons: apps })],
+        ["Thanos snap",     (t) => FX.thanosSnap(tl, t, { text: "OLD WAY" }), true],
+        ["System map",      (t) => FX.systemMap(tl, t), true],
+        ["Tool orbit",      (t) => FX.toolOrbit(tl, t, { icons: tools, count: 11, label: "tools" }), true],
+        ["Funnel in",       (t) => FX.funnelIn(tl, t), true],
+        ["Reel feed",       (t) => FX.reelFeed(tl, t, { src: feed[0], caption: "A reference post" })],
+        ["Playing grid",    (t) => FX.playingGrid(tl, t, { images: thumbs.slice(0, 4) })],
+        ["Number climb",    (t) => FX.numberClimb(tl, t, { label: "VIEWS · DEMO", to: 248000 }), true],
+        ["Lab panel",       (t) => FX.labPanel(tl, t), true],
+        ["3D terminal",     (t) => FX.model3D(tl, t, { dur: 1.6, x: 40, w: 680, y: 150, h: 560 }), true],
+        ["3D orbit",        (t) => FX.orbit3D(tl, t, { kind: "molecule" }), true],
+        ["Comment CTA",     (t) => FX.commentCTA(tl, t, { keyword: KEYWORD })],
+        ["Comment drop",    (t) => FX.commentDrop(tl, t, { keyword: KEYWORD })],
+      ];
+
+      let t = 0.15;
+      const items = [];
+      for (const [name, build, isNew] of plan) {
+        items.push({ name, at: t, isNew: !!isNew });
+        t = build(t) + 0.02;
+      }
+      window.__fxItems = items; // tools/fx-scrub.mjs --items reads this
+      const ctaAt = items.find((i) => i.name === "Comment CTA").at;
+
+      FX.toc(tl, { items, from: items[1].at - 0.2, to: TOTAL, footer: "30 effects", finaleAt: items[items.length - 1].at + 0.6 });
+      FX.caption(tl, [
+        { at: 0.2, end: ctaAt - 0.05, html: "Claude made ALL of these effects" },
+        { at: ctaAt, end: TOTAL, html: `Get all 30 effects<br>comment <em>${KEYWORD}</em> below` },
+      ]);
+
+      FX.finalize(tl);
+      tl.set({}, {}, TOTAL);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
