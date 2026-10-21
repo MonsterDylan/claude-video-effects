@@ -1,6 +1,6 @@
 # Claude Video Effects
 
-30 one-call motion effects for vertical (9:16) talking-head video. Built with Claude Code on [Hyperframes](https://hyperframes.heygen.com), so every effect is plain HTML + CSS + GSAP: seekable, deterministic, and editable by asking Claude.
+36 one-call motion effects for vertical (9:16) talking-head video. Built with Claude Code on [Hyperframes](https://hyperframes.heygen.com), so every effect is plain HTML + CSS + GSAP: seekable, deterministic, and editable by asking Claude.
 
 ```js
 FX.kineticHook(tl, 0.3, { lines: ["STOP", "EDITING"] });          // at 0.3s
@@ -10,7 +10,7 @@ FX.commentCTA(tl, 27.8, { keyword: "KEYWORD" });
 
 One function call per effect. Put it at the second you say the word.
 
-![All 30 effects on the placeholder plate](docs/all-30-placeholder.jpg)
+![The original 30 effects on the placeholder plate](docs/all-30-placeholder.jpg)
 
 ## What you need
 
@@ -70,7 +70,7 @@ Open Claude Code in your project folder and say what you want, in plain English,
 
 > Read fx/fx.js. Get word timings with `npx hyperframes transcribe assets/face.mp4 --json`. Add FX.terminalReveal when I say "prompt", with the prompt "cut my filler words" and the result "DONE". Then scrub it with `node <path-to-repo>/tools/fx-scrub.mjs . --times <that time + 1s>` and show me the frame.
 
-## The 30 effects
+## The 36 effects
 
 `FX.<name>(tl, at, opts)` returns the end time. Every effect takes `{ dur }` to speed it up or slow it down; fast lists work down to about 0.6s per effect. Every effect also takes `{ sfx: false }` to drop its default sound.
 
@@ -106,6 +106,14 @@ Open Claude Code in your project folder and say what you want, in plain English,
 | 28 | 3D orbit | `orbit3D` | `kind: "molecule" \| "icosa"` | a spinning 3D molecule |
 | 29 | Comment CTA | `commentCTA` | `keyword`, `reply`, `handle` | the call to action |
 | 30 | Comment drop | `commentDrop` | `keyword` | CTA finale |
+| 31 | Face zoom | `faceZoom` | `scale` (1.35), `style` (punch / push / cut), `out` | punch in on a key line (follows the face track) |
+| 32 | Draw word | `drawWord` | `word`, `color`, `x`, `y`, `size`, `rotate`, `font` | a fun spoken word hand-written on screen (needs a script font, e.g. Caveat 700) |
+| 33 | Clock rewind | `clockRewind` | `from`, `to` (minutes), `rewindAt`, `rewindDur`, `fromLabel`, `toLabel` | "minutes, not hours": hands spin backward. Use your real numbers |
+| 34 | Title swap | `titleSwap` | `word`, `swap`, `swapAt` (absolute time), `size` | film-title reveal, letters blast sideways, a new word lands |
+| 35 | Strike word | `strikeWord` | `lines[{text,size}]`, `ring: "block"`, `ringAt`, `ringDur`, `slashAt` | "not the X": bold lines slam in, a red circle-slash crosses one out |
+| 36 | Bold drop | `boldDrop` | `lines[{text,size,color,at}]`, `washAt`, `y` | heavy letters drop per spoken word (behind your head with a cutout), wash off left |
+
+New options on existing effects: `nleTimeline` takes `words` (your line on the caption track), `jiggleDelete` takes `deleteAt[]` (delete each app on its word), `numberClimb` takes `delta: false` (hide the placeholder chip), `thanosSnap` takes `lines[[text,size]]`, `outline` and `snapAt`, and `phoneFeed` takes `endAtFill: true` (end the moment the screen fills, no full-screen scroll).
 
 Extras: `FX.opener` (big headline that shrinks into a header), `FX.toc` (the "IN THIS VIDEO 01 / 30" chapter list), `FX.caption` (locked captions), `FX.cue` (add a sound), `FX.finalize` (required last call).
 

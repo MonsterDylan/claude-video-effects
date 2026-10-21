@@ -457,7 +457,8 @@
     const blocks = [];
     const title = mk("div", "fx-abs", p, { left: px(tx + tw * 0.28), top: px(rowsY[0]), width: px(tw * 0.3), height: px(44), borderRadius: px(8), background: "linear-gradient(90deg,#C44DF0,#7A4DFF)", transformOrigin: "0 50%" });
     mk("div", "fx-abs fx-mono", title, { left: px(10), top: px(11), fontSize: px(16), color: "#fff" }, "TITLE · kinetic");
-    const words = ["the", "AI", "edit", "this", "whole", "video", "for", "me", "in", "one", "shot", "no", "editor", "at", "all", "ever"];
+    const words = o.words ? String(o.words).split(/\s+/).filter(Boolean)
+      : ["the", "AI", "edit", "this", "whole", "video", "for", "me", "in", "one", "shot", "no", "editor", "at", "all", "ever"];
     let cxp = 0, wi = 0;
     while (cxp < tw - 20) {
       const bw = 44 + Math.floor(R() * 40);
@@ -505,7 +506,8 @@
       mk("div", "fx-icon-label", inner, { left: px(-30), top: px(sz + 8), fontSize: px(22) }, ic.label || "");
       const badge = mk("div", "fx-abs", inner, { left: px(-12), top: px(-12), width: px(42), height: px(42), borderRadius: "50%", background: "#3d3a49", border: "2px solid rgba(255,255,255,.6)" });
       mk("div", "fx-abs", badge, { left: px(10), top: px(18), width: px(18), height: px(4), background: "#fff", borderRadius: px(2) });
-      const del = at + 0.5 + i * 0.09, jig = del - (at + 0.08);
+      // o.deleteAt: absolute times, one per icon, to delete each app on its spoken word (long beats)
+      const del = (o.deleteAt && o.deleteAt[i] != null) ? o.deleteAt[i] : at + 0.5 + i * 0.09, jig = del - (at + 0.08);
       tl.fromTo(inner, { rotation: -3 }, { rotation: 3, duration: 0.07, ease: "sine.inOut", yoyo: true, repeat: Math.max(1, Math.floor(jig / 0.07) | 1) }, at + 0.08 + R() * 0.04);
       tl.from(badge, { scale: 0, duration: 0.18, ease: "back.out(3)" }, at + 0.14 + i * 0.03);
       tl.to(outer, { scale: 0, rotation: 25, opacity: 0, duration: 0.2, ease: "back.in(2)" }, del);
@@ -891,10 +893,11 @@
 
   /** 22 Thanos snap: a word (or icon) disintegrates into drifting particles, left to right. */
   FX.thanosSnap = function (tl, at, o = {}) {
-    const d = o.dur ?? 1.4, text = o.text || "OLD WAY";
+    const d = o.dur ?? 1.4, text = o.text || "CAPCUT";
     const R = nextRng();
     const r = root("ui", "thanosSnap");
-    const cw = S.zone.w + 200, chh = 420, x = S.zone.x, y = o.y ?? S.top;
+    // o.lines: [[text, size], ...] stacked; o.outline: dark stroke so it reads on bright backgrounds; o.snapAt: seconds in
+    const cw = S.zone.w + 200, chh = o.h ?? 420, x = S.zone.x, y = o.y ?? S.top;
     const cv = mk("canvas", "fx-abs", r, { left: px(x), top: px(y), width: px(cw), height: px(chh) });
     cv.width = cw; cv.height = chh;
     const size = o.size || fitPx(text, S.zone.w, 200, 0.82);
@@ -909,10 +912,19 @@
         const s = Math.min(260 / img.naturalWidth, 260 / img.naturalHeight);
         c.drawImage(img, 40, chh / 2 - (img.naturalHeight * s) / 2, img.naturalWidth * s, img.naturalHeight * s);
       } else {
-        const g = c.createLinearGradient(0, chh / 2 - size / 2, 0, chh / 2 + size / 2);
-        g.addColorStop(0, "#ffffff"); g.addColorStop(0.6, "#cfc9dd"); g.addColorStop(1, "#ffffff");
-        c.fillStyle = g; c.font = `900 ${size}px Montserrat, Arial, sans-serif`; c.textBaseline = "middle";
-        c.fillText(text, 0, chh / 2);
+        const lines = o.lines || [[text, size]];
+        const total = lines.reduce((a, l) => a + l[1] * 0.98, 0);
+        let ly = chh / 2 - total / 2;
+        c.textBaseline = "middle"; c.lineJoin = "round";
+        lines.forEach(([t, sz]) => {
+          const cy0 = ly + sz * 0.49;
+          c.font = `900 ${sz}px Montserrat, Arial, sans-serif`;
+          if (o.outline !== false) { c.strokeStyle = o.outline || "rgba(7,17,31,.92)"; c.lineWidth = Math.max(8, sz * 0.09); c.strokeText(t, 8, cy0); }
+          const g = c.createLinearGradient(0, cy0 - sz / 2, 0, cy0 + sz / 2);
+          g.addColorStop(0, "#ffffff"); g.addColorStop(0.6, o.fill2 || "#cfc9dd"); g.addColorStop(1, "#ffffff");
+          c.fillStyle = g; c.fillText(t, 8, cy0);
+          ly += sz * 0.98;
+        });
       }
       const data = c.getImageData(0, 0, cw, chh).data, step = 3, out = [];
       let maxX = 1;
@@ -928,7 +940,8 @@
     const draw = (p) => {
       if (!src && !build()) return;
       ctx.clearRect(0, 0, cw, chh);
-      const snapP = Math.max(0, (p - 0.3) / 0.7);
+      const s0 = o.snapAt != null ? Math.min(0.9, o.snapAt / d) : 0.3;
+      const snapP = Math.max(0, (p - s0) / (1 - s0));
       if (snapP <= 0) { ctx.drawImage(src, 0, 0); return; }
       for (const q0 of parts) {
         const k = Math.min(1, Math.max(0, (snapP - q0.dl) / 0.42));
@@ -958,6 +971,7 @@
     mk("div", "fx-abs fx-pill-label", card, { left: px(32), top: px(28) }, o.label || "VIEWS · LAST 30 DAYS");
     const num = mk("div", "fx-abs fx-display fx-tnum", card, { left: px(30), top: px(66), fontSize: px(o.size || 112), color: C.cyan, textShadow: "0 0 28px rgba(53,214,230,.6)" });
     const delta = mk("div", "fx-abs fx-ui-txt", card, { right: px(30), top: px(30), fontSize: px(26), fontWeight: 800, color: "#fff", background: C.magenta, borderRadius: px(12), padding: "6px 14px", boxShadow: "0 0 20px rgba(196,77,240,.7)" }, o.delta || "+312%");
+    if (o.delta === false) delta.style.display = "none";   // the default "+312%" is a placeholder: hide it unless the number is real
     const pts = o.points || (() => { const a = []; let v = 0.08; for (let i = 0; i < 12; i++) { v = Math.min(1, v + 0.02 + R() * 0.11 * (i / 6 + 0.3) - (R() < 0.25 ? 0.07 : 0)); a.push(Math.max(0.03, v)); } a[a.length - 1] = 1; return a; })();
     const cw = w - 60, chh = 240, cy = h - chh - 30;
     const xy = pts.map((v, i) => [(i / (pts.length - 1)) * cw, chh - v * (chh - 16) - 4]);
@@ -1376,7 +1390,11 @@
     if (!T || !T.GLTFLoader) { console.warn("[FX.phoneFeed] three.js / GLTFLoader not loaded"); return at + d; }
     // timing (fractions of d)
     const tSpin = 0.7, tDolly0 = d * 0.47, tDolly1 = d * 0.7, tFlat = tDolly1 - 0.04, tOut = d - 0.34;
-    const swipes = o.swipes || [0.95, 1.5, d * 0.62, d * 0.8];
+    // endAtFill: the effect ENDS the moment the screen fills the frame (no full-screen feed scroll, no whip):
+    // swipes stay before the dive and the phone fades straight into the plate. Make the reel on screen at the dive
+    // a still of your own video and it reads as diving INTO this video.
+    const fill = !!o.endAtFill;
+    const swipes = o.swipes || (fill ? [0.95, 1.5] : [0.95, 1.5, d * 0.62, d * 0.8]);
     const scrollAt = (t) => swipes.reduce((acc, s0) => acc + Math.min(1, Math.max(0, (t - s0) / 0.3)) ** 2 * (3 - 2 * Math.min(1, Math.max(0, (t - s0) / 0.3))), 0);
     const ren = new T.WebGLRenderer({ canvas: cv, alpha: true, antialias: true, preserveDrawingBuffer: true });
     ren.setPixelRatio(1); ren.setSize(W, H, false);
@@ -1427,6 +1445,13 @@
       if (t >= tFlat - 0.05) drawFeed(fctx, W, H, scroll, t, imgs, Object.assign({ topPad: 11 }, o));
     };
     job.then(draw);
+    if (fill) {
+      const end = at + tDolly1 + 0.16;
+      life(tl, r, at, end, 0.05, 0.16);
+      tl.to(p, { v: (tDolly1 + 0.16) / d, duration: tDolly1 + 0.16, ease: "none", onUpdate: draw }, at);
+      if (o.dimHud !== false) dimHud(at, end, true);
+      return end;
+    }
     life(tl, r, at, at + d, 0.05, 0.05);
     tl.to(p, { v: 1, duration: d, ease: "none", onUpdate: draw }, at);
     tl.to(flat, { opacity: 1, duration: 0.14, ease: "power1.inOut" }, at + tFlat);
@@ -1438,6 +1463,228 @@
 
   // ---------------------------------------------------------------- default sound per effect
   // [time from start (negative = from end), sound-fx id, gain]
+  /** 31 Face zoom: a clean zoom on the face (no reticle, no label), anchored on the eyes, then back out.
+      style "punch" (quick snap in, the default), "push" (slow creep in across the beat) or "cut" (instant jump-cut zoom).
+      scale = how far in (1.35), out: false = stay in until the end of the beat, then cut back. Uses window.FX_FACE when present. */
+  FX.faceZoom = function (tl, at, o = {}) {
+    const d = o.dur ?? 1.2, sc = L.scene, z = Math.max(1.02, Math.min(2.5, parseFloat(o.scale) || 1.35));
+    const style = String(o.style || "punch").trim().toLowerCase();
+    const back = !/^(false|no|0|off)$/i.test(String(o.out ?? "true"));
+    const f = FX.faceAt(at), ox = f.cx, oy = f.cy - f.h * 0.08;   // a touch above center: the eyes stay put
+    const outLen = Math.min(0.28, d * 0.3);
+    tl.set(sc, { transformOrigin: `${ox}px ${oy}px` }, at);
+    if (style === "cut") tl.fromTo(sc, { scale: 1 }, { scale: z, duration: 0.01, immediateRender: false }, at);
+    else if (style === "push") tl.fromTo(sc, { scale: 1 }, { scale: z, duration: Math.max(0.3, d - (back ? outLen : 0)), ease: "sine.inOut", immediateRender: false }, at);
+    else tl.fromTo(sc, { scale: 1 }, { scale: z, duration: Math.min(0.3, d * 0.4), ease: "power3.out", immediateRender: false }, at);
+    if (back && style !== "cut") tl.to(sc, { scale: 1, duration: outLen, ease: "power2.inOut" }, at + d - outLen);
+    else tl.set(sc, { scale: 1 }, at + d);
+    tl.set(sc, { transformOrigin: "540px 960px" }, at + d);
+    return at + d;
+  };
+
+  /** 32 Draw word: a handwritten word draws itself on (outline traces in, fill pops, swoosh underline), with a
+      little tilt and bounce. word ("Weeeee"), color (cyan), x/y/size, rotate (-8). Needs a script font loaded on
+      the page (default "Caveat"; Google Fonts family=Caveat:wght@700). Built for the "Whee!" beat. */
+  FX.drawWord = function (tl, at, o = {}) {
+    const d = o.dur ?? 1.4, word = o.word || "Weeeee", col = o.color || C.cyan;
+    const size = o.size ?? 230, font = o.font || "Caveat";
+    const r = root(o.layer || "ui", "drawWord");
+    const bw = o.w ?? 900, bh = Math.round(size * 1.45);
+    const box = mk("div", "fx-abs", r, { left: px(o.x ?? (W - bw) / 2), top: px(o.y ?? S.top + 40), width: px(bw), height: px(bh),
+      transform: `rotate(${o.rotate ?? -8}deg)`, transformOrigin: "30% 60%" });
+    const NS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", `0 0 ${bw} ${bh}`); svg.setAttribute("width", bw); svg.setAttribute("height", bh);
+    svg.style.overflow = "visible"; box.appendChild(svg);
+    const txt = (fill, stroke, sw) => {
+      const t = document.createElementNS(NS, "text");
+      t.setAttribute("x", bw / 2); t.setAttribute("y", size * 1.0); t.setAttribute("text-anchor", "middle");
+      t.setAttribute("font-family", `'${font}', 'Brush Script MT', cursive`); t.setAttribute("font-weight", "700");
+      t.setAttribute("font-size", size); t.setAttribute("fill", fill); t.setAttribute("stroke", stroke);
+      t.setAttribute("stroke-width", sw); t.setAttribute("stroke-linejoin", "round"); t.setAttribute("stroke-linecap", "round");
+      t.textContent = word; svg.appendChild(t); return t;
+    };
+    const shadow = txt("none", "rgba(7,17,31,.55)", 22);
+    const fillT = txt(col, "none", 0);
+    const line = txt("none", "#fff", 5);
+    const sw = document.createElementNS(NS, "path");
+    const y0 = size * 1.18;
+    sw.setAttribute("d", `M ${bw * 0.12} ${y0} C ${bw * 0.35} ${y0 + 34}, ${bw * 0.62} ${y0 - 6}, ${bw * 0.9} ${y0 - 28}`);
+    sw.setAttribute("fill", "none"); sw.setAttribute("stroke", C.magenta); sw.setAttribute("stroke-width", 14); sw.setAttribute("stroke-linecap", "round");
+    svg.appendChild(sw);
+    const L1 = 2600, L2 = 1000;   // generous dash lengths (text outlines + swoosh)
+    [line, shadow].forEach((e) => { e.style.strokeDasharray = L1; e.style.strokeDashoffset = L1; });
+    sw.style.strokeDasharray = L2; sw.style.strokeDashoffset = L2;
+    life(tl, r, at, at + d, 0.01, 0.2);
+    const drawT = Math.min(0.55, d * 0.4);
+    tl.fromTo(box, { scale: 0.86 }, { scale: 1, duration: 0.5, ease: "back.out(2.2)", immediateRender: false }, at);
+    tl.to([line, shadow], { strokeDashoffset: 0, duration: drawT, ease: "power1.inOut" }, at + 0.02);
+    // reveal the fill left to right just behind the pen
+    tl.fromTo(fillT, { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: drawT, ease: "power1.inOut", immediateRender: false }, at + 0.1);
+    tl.to(sw, { strokeDashoffset: 0, duration: 0.3, ease: "power2.out" }, at + drawT + 0.04);
+    tl.to(box, { rotation: (o.rotate ?? -8) + 4, y: -10, duration: 0.18, ease: "sine.inOut", yoyo: true, repeat: 1 }, at + drawT + 0.1);
+    return at + d;
+  };
+
+  /** 33 Clock rewind: "hours become minutes". A clock + readout show `from` minutes (180 = 3 HRS), then the hands
+      spin BACKWARD and the readout counts down to `to` (your real number), landing on toLabel. Opts: from, to,
+      rewindAt (s into the effect), rewindDur, fromLabel, toLabel, topLabel, endLabel, y. */
+  FX.clockRewind = function (tl, at, o = {}) {
+    const d = o.dur ?? 2.8, from = o.from ?? 180, to = o.to ?? 22;
+    const rw = at + (o.rewindAt ?? 0.55), rwd = o.rewindDur ?? 1.1;
+    const r = root("ui", "clockRewind");
+    const x = S.zone.x, y = o.y ?? S.top, w = S.zone.w, h = 430;
+    const card = mk("div", "fx-glass", r, { left: px(x), top: px(y), width: px(w), height: px(h), borderRadius: px(32) });
+    const NS = "http://www.w3.org/2000/svg", cs = 330, R0 = cs / 2 - 14;
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", `0 0 ${cs} ${cs}`); svg.setAttribute("width", cs); svg.setAttribute("height", cs);
+    Object.assign(svg.style, { position: "absolute", left: px(40), top: px((h - cs) / 2) });
+    card.appendChild(svg);
+    const el = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); svg.appendChild(e); return e; };
+    const c0 = cs / 2;
+    el("circle", { cx: c0, cy: c0, r: R0, fill: "rgba(7,17,31,.65)", stroke: "rgba(185,178,200,.55)", "stroke-width": 4 });
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2, r1 = R0 - (i % 3 ? 14 : 26), r2 = R0 - 6;
+      el("line", { x1: c0 + Math.sin(a) * r1, y1: c0 - Math.cos(a) * r1, x2: c0 + Math.sin(a) * r2, y2: c0 - Math.cos(a) * r2, stroke: i % 3 ? "rgba(185,178,200,.6)" : "#fff", "stroke-width": i % 3 ? 4 : 7, "stroke-linecap": "round" });
+    }
+    const arcR = R0 - 40, arcL = 2 * Math.PI * arcR;
+    const arc = el("circle", { cx: c0, cy: c0, r: arcR, fill: "none", stroke: C.magenta, "stroke-width": 10, "stroke-linecap": "round", transform: `rotate(-90 ${c0} ${c0})`, opacity: 0.85 });
+    arc.style.strokeDasharray = arcL;
+    const hourH = el("line", { x1: c0, y1: c0, x2: c0, y2: c0 - R0 * 0.5, stroke: "#fff", "stroke-width": 12, "stroke-linecap": "round" });
+    const minH = el("line", { x1: c0, y1: c0, x2: c0, y2: c0 - R0 * 0.78, stroke: C.cyan, "stroke-width": 8, "stroke-linecap": "round" });
+    el("circle", { cx: c0, cy: c0, r: 11, fill: "#fff" });
+    const tx = 40 + cs + 40;
+    const top = mk("div", "fx-abs fx-mono", card, { left: px(tx), top: px(58), fontSize: px(24), letterSpacing: ".18em", color: C.lavHi }, o.topLabel || "TRADITIONAL EDIT");
+    const read = mk("div", "fx-abs fx-mono fx-tnum", card, { left: px(tx), top: px(104), fontSize: px(96), fontWeight: 700, color: "#fff" });
+    const big = mk("div", "fx-abs fx-display", card, { left: px(tx), top: px(238), fontSize: px(118), color: "#fff" }, o.fromLabel || "3 HRS");
+    const strike = mk("div", "fx-abs", card, { left: px(tx - 8), top: px(300), width: px(330), height: px(12), borderRadius: px(6), background: C.red, transformOrigin: "0 50%" });
+    const toL = mk("div", "fx-abs fx-display", card, { left: px(tx), top: px(238), fontSize: px(118), color: C.cyan, textShadow: "0 0 30px rgba(53,214,230,.6)", opacity: 0 }, o.toLabel || `${to} MIN`);
+    const fmt = (v) => { const tot = Math.max(0, Math.round(v * 60)), hh = Math.floor(tot / 3600), mm = Math.floor((tot % 3600) / 60), ss = tot % 60; return `${hh}:${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`; };
+    const p = { v: from };
+    const set = () => {
+      minH.setAttribute("transform", `rotate(${(p.v % 60) * 6} ${c0} ${c0})`);
+      hourH.setAttribute("transform", `rotate(${(p.v / 60) * 30} ${c0} ${c0})`);
+      arc.style.strokeDashoffset = arcL * (1 - Math.min(1, p.v / from));
+      read.textContent = fmt(p.v);
+    };
+    set();
+    life(tl, r, at, at + d, 0.01);
+    tl.from(card, { y: -40, opacity: 0, scale: 0.94, duration: 0.3, ease: "power3.out" }, at);
+    tl.to(p, { v: to, duration: rwd, ease: "power3.inOut", onUpdate: set }, rw);
+    tl.fromTo(svg, { filter: "blur(0px)" }, { filter: "blur(1.6px)", duration: rwd * 0.5, ease: "power2.in", yoyo: true, repeat: 1, immediateRender: false }, rw);
+    tl.fromTo(strike, { scaleX: 0 }, { scaleX: 1, duration: 0.22, ease: "power2.out", immediateRender: false }, rw + 0.05);
+    tl.to([big, strike], { opacity: 0, y: -20, duration: 0.14, ease: "power2.in" }, rw + rwd - 0.3);   // clear BEFORE toLabel lands (no overlap)
+    tl.fromTo(toL, { opacity: 0, scale: 1.4 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2.4)", immediateRender: false }, rw + rwd - 0.05);
+    tl.to(top, { color: C.cyan, duration: 0.15 }, rw + rwd - 0.05);
+    tl.call(() => { top.textContent = o.endLabel || "RAW TO FINAL · CLAUDE"; }, null, rw + rwd - 0.05);
+    tl.call(() => { top.textContent = o.topLabel || "TRADITIONAL EDIT"; }, null, at);
+    tl.to(read, { color: C.cyan, duration: 0.15 }, rw + rwd - 0.05);
+    return at + d;
+  };
+
+  /** 34 Title swap: a word reveals like a film title (letters blur in from wide tracking), then at swapAt (absolute
+      time) its letters blast out sideways and `swap` punches in where it was. Built for "Make it cinematic... done." */
+  FX.titleSwap = function (tl, at, o = {}) {
+    const d = o.dur ?? 2.0, word = o.word || "CINEMATIC", swap = o.swap || "DONE.", sa = o.swapAt ?? at + d * 0.65;
+    const size = o.size ?? 124, y = o.y ?? S.top + 80;
+    const r = root(o.layer || "ui", "titleSwap");
+    const row = mk("div", "fx-abs", r, { left: 0, width: px(W), top: px(y), textAlign: "center", whiteSpace: "nowrap",
+      fontFamily: "var(--fx-serif)", fontStyle: "normal", fontSize: px(size), color: "#fff", letterSpacing: "0.7em",
+      textShadow: "0 0 26px rgba(53,214,230,.45), 0 6px 22px rgba(7,17,31,.85)" });
+    const cs = Array.from(word).map((ch) => mk("span", "", row, { display: "inline-block" }, ch === " " ? "&nbsp;" : ch));
+    const sw = mk("div", "fx-abs fx-display", r, { left: 0, width: px(W), top: px(y - size * 0.25), textAlign: "center", fontSize: px(o.swapSize ?? size * 1.7),
+      color: "#fff", textShadow: "0 0 34px rgba(122,77,255,.7), 0 8px 26px rgba(7,17,31,.85)", opacity: 0 }, swap);
+    const mid = (cs.length - 1) / 2;
+    life(tl, r, at, at + d, 0.01, 0.18);
+    tl.fromTo(row, { letterSpacing: "0.7em" }, { letterSpacing: "0.16em", duration: Math.min(1.0, sa - at - 0.1), ease: "power3.out", immediateRender: false }, at);
+    cs.forEach((c, i) => tl.from(c, { opacity: 0, filter: "blur(16px)", y: 18, duration: 0.5, ease: "power2.out" }, at + Math.abs(i - mid) * 0.05));
+    // blast sideways from the centre
+    cs.forEach((c, i) => {
+      const side = i - mid, dir = side === 0 ? (i % 2 ? 1 : -1) : Math.sign(side);
+      tl.to(c, { x: dir * (500 + Math.abs(side) * 120), y: (i % 2 ? -1 : 1) * (20 + Math.abs(side) * 14), rotation: dir * (20 + Math.abs(side) * 12),
+        opacity: 0, filter: "blur(10px)", duration: 0.42, ease: "power3.in" }, sa + Math.abs(side) * 0.01);
+    });
+    tl.fromTo(sw, { opacity: 0, scale: 1.7, filter: "blur(14px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.28, ease: "back.out(2.2)", immediateRender: false }, sa + 0.06);
+    return at + d;
+  };
+
+  /** 35 Strike word: big bold lines slam in from the right, then a red circle + slash draws over the struck line.
+      lines: [{text, size}], strike (index, default last), strikeAt (absolute), color (#0B0B0F ink), y. */
+  FX.strikeWord = function (tl, at, o = {}) {
+    const d = o.dur ?? 1.8, lines = o.lines || [{ text: "NOT THE", size: 110 }, { text: "TECHNICIAN", size: 124 }];
+    const si = o.strike ?? lines.length - 1, sa = o.strikeAt ?? at + 0.6, col = o.color || "#0B0B0F";
+    const r = root(o.layer || "ui", "strikeWord");
+    const x = o.x ?? S.zone.x, y0 = o.y ?? S.top;
+    let yy = y0; const els = [], boxes = [];
+    lines.forEach((l, i) => {
+      const e = mk("div", "fx-abs fx-display", r, { left: px(x), top: px(yy), fontSize: px(l.size), color: l.color || col,
+        textShadow: "0 0 18px rgba(255,255,255,.35)" }, l.text);
+      els.push(e); boxes.push({ y: yy, h: l.size, w: l.text.length * l.size * (o.ratio ?? 0.76) });
+      yy += l.size * 1.02;
+    });
+    const NS = "http://www.w3.org/2000/svg", b = boxes[si];
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", W); svg.setAttribute("height", H);
+    Object.assign(svg.style, { position: "absolute", left: 0, top: 0, overflow: "visible" });
+    r.appendChild(svg);
+    // o.ring "block": one big hand-drawn circle around ALL the lines, starting over the first word (upper left) and
+    // running clockwise round the struck word; drawn across ringAt..ringAt+ringDur, then the slash comes DOWN at slashAt.
+    // Default ("line"): a tight ellipse round the struck line, ring + slash at strikeAt.
+    const block = o.ring === "block", thick = o.thickness ?? (block ? 26 : 18);
+    const bw = block ? Math.max(...boxes.map((q) => q.w)) : b.w, by0 = block ? y0 : b.y, bh = block ? yy - y0 : b.h;
+    const cx = x + bw / 2, cy = by0 + bh * 0.5;
+    const rx = bw / 2 + (o.pad ?? (block ? 40 : 24)), ry = block ? Math.max(bh / 2 + (o.padY ?? 70), rx * (o.round ?? 0.56)) : bh * 0.95;
+    const R2 = nextRng();
+    const pts = [], th0 = block ? Math.PI * 1.18 : 0, sweep = Math.PI * 2 * (block ? 1.06 : 1);
+    for (let i = 0; i <= 140; i++) {
+      const t = th0 + (sweep * i) / 140, wob = block ? 1 + Math.sin(i * 0.21 + R2() * 0.3) * 0.012 + (i / 140) * 0.03 : 1;
+      pts.push([cx + Math.cos(t) * rx * wob, cy + Math.sin(t) * ry * wob]);
+    }
+    const ring = document.createElementNS(NS, "path");
+    ring.setAttribute("d", "M " + pts.map((q) => q[0].toFixed(1) + " " + q[1].toFixed(1)).join(" L "));
+    Object.entries({ fill: "none", stroke: C.red, "stroke-width": thick, "stroke-linecap": "round", "stroke-linejoin": "round", transform: `rotate(${block ? -5 : -4} ${cx} ${cy})` }).forEach(([k, v]) => ring.setAttribute(k, v));
+    const sl = document.createElementNS(NS, "line");
+    const ang = Math.atan2(ry, rx), lx = Math.cos(ang) * rx * 0.96, ly = Math.sin(ang) * ry * 0.96;
+    // the slash comes DOWN: top-left to bottom-right
+    Object.entries({ x1: cx - lx, y1: cy - ly, x2: cx + lx, y2: cy + ly, stroke: C.red, "stroke-width": thick, "stroke-linecap": "round" }).forEach(([k, v]) => sl.setAttribute(k, v));
+    svg.appendChild(ring); svg.appendChild(sl);
+    let ringL = 0; for (let i = 1; i < pts.length; i++) ringL += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    const slL = Math.hypot(2 * lx, 2 * ly);
+    ring.style.strokeDasharray = ringL; ring.style.strokeDashoffset = ringL;
+    sl.style.strokeDasharray = slL; sl.style.strokeDashoffset = slL;
+    const ra = o.ringAt ?? sa, rd = o.ringDur ?? 0.34, slA = o.slashAt ?? sa + 0.3;
+    life(tl, r, at, at + d, 0.01, 0.12);
+    els.forEach((e, i) => tl.from(e, { x: 1100, skewX: -18, filter: "blur(12px)", duration: 0.32, ease: "power4.out" }, (o.lineAt && o.lineAt[i] != null) ? o.lineAt[i] : at + i * 0.14));
+    // round caps on a fully-offset dash still paint a dot: keep both strokes hidden until each draw starts
+    tl.fromTo([ring, sl], { opacity: 0 }, { opacity: 0, duration: 0.01, immediateRender: true }, at);
+    tl.set(ring, { opacity: 1 }, ra);
+    tl.to(ring, { strokeDashoffset: 0, duration: rd, ease: block ? "sine.inOut" : "power2.inOut" }, ra);
+    tl.set(sl, { opacity: 1 }, slA);
+    tl.to(sl, { strokeDashoffset: 0, duration: 0.18, ease: "power3.out" }, slA);
+    if (!block) tl.fromTo(els[si], { opacity: 1 }, { opacity: 0.55, duration: 0.2, immediateRender: false }, sa + 0.4);
+    return at + d;
+  };
+
+  /** 36 Bold drop: heavy Montserrat lines whose letters fall and bounce in, each line on its own spoken word,
+      then (washAt) the whole stack washes off to the left. lines: [{text, size, color, at}], y, layer ("behind"
+      puts it behind the head when a cutout is on screen). */
+  FX.boldDrop = function (tl, at, o = {}) {
+    const d = o.dur ?? 1.8, lines = o.lines || [{ text: "BOLD", size: 200 }];
+    const R = nextRng();
+    const r = root(o.layer || "behind", "boldDrop");
+    const box = mk("div", "fx-abs", r, { left: px(S.zone.x), top: px(o.y ?? S.top), width: px(S.zone.w) });
+    lines.forEach((l) => {
+      const line = mk("div", "fx-display", box, { fontSize: px(l.size), color: l.color || "#0B0B0F", marginBottom: px(l.gap ?? l.size * 0.06),
+        textShadow: l.shadow || "0 6px 20px rgba(255,255,255,.25)", whiteSpace: "nowrap" });
+      const cs = chars(line, l.text);
+      const la = l.at ?? at;
+      cs.forEach((c, i) => tl.from(c, { y: -1200, rotation: (R() - 0.5) * 40, duration: 0.55, ease: "bounce.out" }, la + i * 0.045));
+    });
+    life(tl, r, at, at + d, 0.01, 0.05);
+    if (o.washAt != null) tl.to(box, { x: -1300, skewX: 14, filter: "blur(14px)", opacity: 0, duration: 0.38, ease: "power3.in" }, o.washAt);
+    return at + d;
+  };
+
   FX.DEFAULT_CUES = {
     kineticHook: [[0.05, "ui-toggle", 0.8]], gravityDrop: [[0.55, "ui-drop"]], giantCaption: [[0.05, "ui-pluck"]],
     promptBar: [[0.62, "ui-click-precise"], [0.8, "ui-confirm-chime"]], storyboardDeck: [[0.05, "ui-swipe"]],
@@ -1452,6 +1699,9 @@
     systemMap: [[0.02, "ui-open"], [0.9, "ui-confirm-chime", 0.7]], toolOrbit: [[0.1, "ui-pluck"], [0.7, "ui-glass-tick"]],
     funnelIn: [[0.65, "ui-swipe"], [1.6, "ui-drop"]], model3D: [[0.0, "ui-toggle", 0.8]],
     phoneFeed: [[0.0, "ui-toggle", 0.8], [0.95, "ui-scroll", 0.6], [-1.15, "ui-expand"], [-0.34, "ui-swipe"]],
+    drawWord: [[0.02, "ui-swipe", 0.7]], faceZoom: [[0.0, "ui-swipe", 0.6]],
+    clockRewind: [[0.0, "ui-open"], [0.6, "ui-scroll", 0.8], [1.6, "ui-confirm-chime"]], titleSwap: [[0.05, "ui-expand", 0.7], [-0.6, "ui-swipe"]],
+    strikeWord: [[0.0, "ui-swipe"], [0.6, "ui-pluck"]], boldDrop: [[0.5, "ui-drop"]],
   };
   Object.keys(FX.DEFAULT_CUES).forEach((name) => {
     const f = FX[name];
@@ -1478,7 +1728,10 @@
     ["orbit3D", "behind", "3D object (molecule)"],
     ["systemMap", "ui", "a system: hub + spokes"], ["toolOrbit", "ui", "\"N tools\" count with logos circling"],
     ["funnelIn", "ui", "many inputs -> one output"], ["model3D", "behind", "3D model (your GLB or the built-in terminal)"],
-    ["phoneFeed", "ui", "3D phone with a scrolling reel feed, dives into a full-frame takeover"],
+    ["phoneFeed", "ui", "3D phone with a scrolling reel feed, dives into a full-frame takeover (endAtFill: stop at the fill)"],
+    ["faceZoom", "scene", "punch in on a key line"], ["drawWord", "ui", "handwritten word draws itself on"],
+    ["clockRewind", "ui", "hours rewind to minutes (real numbers)"], ["titleSwap", "ui", "film-title word blasts apart, new word lands"],
+    ["strikeWord", "ui", "bold word crossed out with a red circle-slash"], ["boldDrop", "behind", "heavy letters drop in per word, wash off left"],
   ];
   window.FX = FX;
 })();

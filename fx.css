@@ -1,3 +1,9 @@
+/* Chrome's Auto Dark Mode (and dark-mode extensions) flip dark text to light on pages that don't opt out, so
+   black type can show WHITE on a white wall in a preview. 'only light' opts the page out. */
+:root { color-scheme: only light; }
+/* belt and braces for ink-coloured display type: a thin light outline still reads if colours get flipped */
+[data-fx="strikeWord"] .fx-display, [data-fx="boldDrop"] .fx-display { text-shadow: -3px -3px 0 rgba(255,255,255,.9), 3px -3px 0 rgba(255,255,255,.9), -3px 3px 0 rgba(255,255,255,.9), 3px 3px 0 rgba(255,255,255,.9), 0 0 18px rgba(255,255,255,.35) !important; }   /* layered shadow, not -webkit-text-stroke (inconsistent in Chromium renders) */
+
 /* ==========================================================================
    Claude Video Effects: shared styles (v1)
    The "Signal" palette: violet / magenta / cyan, red = danger only. Change the

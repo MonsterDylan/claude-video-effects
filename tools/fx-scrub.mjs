@@ -34,7 +34,8 @@ const server = http.createServer((req, res) => {
 await new Promise((r) => server.listen(0, r));
 const port = server.address().port;
 
-const browser = await chromium.launch({ args: ["--autoplay-policy=no-user-gesture-required", "--use-gl=angle", "--enable-unsafe-swiftshader"] });
+// FX_SCRUB_ARGS: extra Chromium flags, e.g. "--enable-features=WebContentsForceDark" to see what a dark-mode browser shows
+const browser = await chromium.launch({ args: ["--autoplay-policy=no-user-gesture-required", "--use-gl=angle", "--enable-unsafe-swiftshader", ...(process.env.FX_SCRUB_ARGS || "").split(" ").filter(Boolean)] });
 const page = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
 page.on("console", (m) => { if (["error", "warning"].includes(m.type())) console.log("[page]", m.text()); });
 page.on("pageerror", (e) => console.log("[pageerror]", e.message));
